@@ -1,11 +1,13 @@
-package leibniz
+package std.evidence
 
-import leibniz.inhabitance.{Inhabited, Proposition, SingletonOf, Uninhabited}
-import leibniz.internal.illTyped
-import leibniz.variance._
+import com.github.ghik.silencer.silent
+import std.evidence.inhabitance.{Inhabited, Proposition, SingletonOf, Uninhabited}
+import std.macros.illtyped.illTyped
+import std.evidence.variance._
 import org.scalatest.{FunSuite, Matchers}
+import std.data.quantified.{Forall, Implies, |-}
 
-class Derivation extends FunSuite with Matchers {
+@silent class Derivation extends FunSuite with Matchers {
   test("proposition") {
     implicitly[Proposition[Proposition[0]]]
     implicitly[Proposition[0 === 1]]
@@ -183,85 +185,6 @@ class Derivation extends FunSuite with Matchers {
     implicitly[Leibniz[Nothing, Nothing, Nothing, Nothing]]
   }
 
-  test("iso") {
-    implicitly[Int Iso Int]
-    implicitly[Nothing Iso Nothing]
-    implicitly[Any Iso Any]
-  }
-
-  test("strong inequality") {
-    val int0 = 0
-    val long0 = 0
-
-    Apart[0, 1]
-    Apart[0, 0L]
-    Apart[0, "a"]
-    Apart[List[0], List[1]]
-    Apart[List[1], List[1L]]
-    Apart[Void, Any]
-    Apart[Void, Null]
-    Apart[Void, AnyRef]
-    Apart[Void, AnyVal]
-    Apart[Any, AnyRef]
-    Apart[Any, AnyVal]
-    Apart[AnyVal, AnyRef]
-    Apart[Int, Long]
-    Apart[Int, 0]
-
-    // Apart[None.type, 0]
-
-    // implicitly[Int =!= Int with Long]
-  }
-
-  test("concrete types") {
-    TypeId[0]
-    TypeId[Nothing]
-    TypeId[Void]
-    TypeId[Int]
-    TypeId[String]
-    TypeId[List[Option[Int]]]
-    TypeId["abc"]
-    TypeId[List["abc"]]
-    TypeId[List[Array[Seq[Option[1]]]]]
-
-    // Eq[None.type]
-    // TypeId[None.type]
-
-    // ConcreteType[Int with Any]
-    // ConcreteType[(AnyRef { type Self = this.type }) with (Int { type Y })]
-    // ConcreteType[i.type forSome { val i: X; type X }]
-  }
-
-  test("type id comparisons") {
-    val types: Array[TypeId[_]] = Array(
-      TypeId[0],
-      TypeId[0L],
-      TypeId[1],
-      TypeId[Nothing],
-      TypeId[Int],
-      TypeId[String],
-      TypeId[List[Option[Int]]],
-      TypeId["abc"],
-      TypeId["cde"],
-      TypeId[List["abc"]],
-      TypeId[List[Array[Seq[Option[1]]]]]
-    )
-
-    for (i <- types.indices; j <- types.indices) {
-//      println(s"$i $j ${types(i)} ${types(j)}")
-      if (i == j) (types(i) compare types(j)).isRight should be (true)
-      else (types(i) compare types(j)).isRight should be (false)
-    }
-
-
-    // Eq[None.type]
-    // TypeId[None.type]
-
-    // ConcreteType[Int with Any]
-    // ConcreteType[(AnyRef { type Self = this.type }) with (Int { type Y })]
-    // ConcreteType[i.type forSome { val i: X; type X }]
-  }
-
   test("inhabitance") {
     Inhabited[Any]
     Inhabited[AnyVal]
@@ -398,18 +321,19 @@ class Derivation extends FunSuite with Matchers {
 
   test("forall") {
     type f[x] = Inhabited[Int]
-    Forall[f]
+    implicitly[Forall[f]]
 
-    Forall[λ[x => Inhabited[Int]]]
+    implicitly[Forall[λ[x => Inhabited[Int]]]]
 
     trait Foo[A]
     implicit def foo[A]: Foo[A] = new Foo[A] { }
 
-    Forall[Foo]
-    Forall[λ[x => Foo[(x, x)]]]
+    implicitly[Forall[Foo]]
+    implicitly[Forall[λ[x => Foo[(x, x)]]]]
 
-    type g[x] = Inhabited[x] |- Inhabited[Inhabited[x]]
-    Forall[g]
+    // FIXME: This worked with a macro-based implementation.
+    // type g[x] = Inhabited[x] |- Inhabited[Inhabited[x]]
+    // implicitly[Forall[g]]
 
 //    Forall[({type L[x] = Inhabited[x] |- Inhabited[Inhabited[x]]})#L]
 

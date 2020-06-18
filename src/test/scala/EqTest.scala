@@ -1,4 +1,4 @@
-package leibniz
+package std.evidence
 
 import org.scalatest.{FunSuite, Matchers}
 
